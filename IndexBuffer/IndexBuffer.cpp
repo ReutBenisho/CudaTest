@@ -52,6 +52,9 @@ Which is:
       (3,0) , (4,0) , (3,1) , (4,1) , (3,2) , (4,2) , (3,3) , (4,3) , (3,4) , (4,4) ]
 
 */
+
+char print = 0;
+
 struct Point
 {
     char i;
@@ -59,13 +62,15 @@ struct Point
 
     void Print()
     {
-        //printf("(%d,%d) , ", i, j);
+        if(print == 'y')
+            printf("(%d,%d) , ", i, j);
     }
 };
 
 void PrintNewLine()
 {
-    //printf("\n");
+    if (print == 'y')
+        printf("\n");
 }
 
 struct Data
@@ -174,9 +179,11 @@ void CreateIndexBufferMultiThreaded(int rows, int cols, Point*& arr_result, long
 
     for (int i = 0; i < threads.size(); i++)
     {
-        //printf("Waiting for thread #%d ...\n", i);
+        if (print == 'y')
+            printf("Waiting for thread #%d ...\n", i);
         threads[i].join();
-        //printf("Thread #%d is done!\n", i);
+        if (print == 'y')
+            printf("Thread #%d is done!\n", i);
     }
 }
 
@@ -184,6 +191,9 @@ void CreateIndexBufferMultiThreaded(int rows, int cols, Point*& arr_result, long
 int main()
 {
     std::cout << "Hello World!\n";
+    std::cout << "Print result array? [y/n]\n";
+    
+    std::cin >> print;
     int n;
     std::cout << "Enter a number:\n";
 
