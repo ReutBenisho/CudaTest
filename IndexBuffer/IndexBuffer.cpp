@@ -2,6 +2,9 @@
 //
 
 #include <iostream>
+#include <time.h>
+#include <vector>
+#include <thread>
 
 
 /*
@@ -56,20 +59,25 @@ struct Point
 
     void Print()
     {
-        printf("(%d,%d) , ", i, j);
+        //printf("(%d,%d) , ", i, j);
     }
 };
+
+void PrintNewLine()
+{
+    //printf("\n");
+}
 
 struct Data
 {
     char x;
     char y;
-    char x;
+    char z;
 };
 
-void CreateIndexBuffer(int rows, int cols, Point*& arr_result, int& size)
+void CreateIndexBufferSingleThreaded(int rows, int cols, Point*& arr_result, long& size)
 {
-    int index = 0;
+    long index = 0;
     size = rows * cols * 2 + (rows - 1) * 2;
     arr_result = new Point[size];
 
@@ -92,7 +100,7 @@ void CreateIndexBuffer(int rows, int cols, Point*& arr_result, int& size)
             index++;
         }
 
-        printf("\n");
+        PrintNewLine();
         
         if (i + 1 == rows - 1)
             break;
@@ -107,21 +115,104 @@ void CreateIndexBuffer(int rows, int cols, Point*& arr_result, int& size)
         arr_result[index].j = 0;
         arr_result[index].Print();
 
-        printf("\n");
+        PrintNewLine();
         index++;
     }
 }
 
+void CalcRow(long rowIndex, int rows, int cols, Point* arr_result)
+{
+    long index = rowIndex * (cols * 2 + 2 + 1);
+    for (int j = 0; j < cols; ++j)
+    {
+        arr_result[index].i = rowIndex;
+        arr_result[index].j = j;
+
+        arr_result[index].Print();
+
+        index++;
+
+        arr_result[index].i = rowIndex + 1;
+        arr_result[index].j = j;
+
+        arr_result[index].Print();
+
+        index++;
+    }
+
+    PrintNewLine();
+
+    if (rowIndex + 1 != rows - 1)
+    {
+
+        arr_result[index].i = rowIndex + 1;
+        arr_result[index].j = cols - 1;
+        arr_result[index].Print();
+
+        index++;
+
+        arr_result[index].i = rowIndex + 1;
+        arr_result[index].j = 0;
+        arr_result[index].Print();
+
+        PrintNewLine();
+        index++;
+    }
+}
+
+void CreateIndexBufferMultiThreaded(int rows, int cols, Point*& arr_result, long& size)
+{
+    size = rows * cols * 2 + (rows - 1) * 2;
+    arr_result = new Point[size];
+    long num_of_threads = (long)rows - 1;
+    std::vector<std::thread> threads(num_of_threads);
+
+    for (int i = 0; i < threads.size(); ++i) // No need for last row
+    {
+        threads[i] = std::thread(CalcRow, i, rows, cols, arr_result);
+    }
+
+    for (int i = 0; i < threads.size(); i++)
+    {
+        //printf("Waiting for thread #%d ...\n", i);
+        threads[i].join();
+        //printf("Thread #%d is done!\n", i);
+    }
+}
+
+
 int main()
 {
     std::cout << "Hello World!\n";
+    int n;
     std::cout << "Enter a number:\n";
 
-    int n;
+
     std::cin >> n;
-    Point* points = nullptr;
-    int size = 0;
-    CreateIndexBuffer(n, n, points, size);
+    while(n > 0)
+    {
+        
+        Point* points = nullptr;
+        long size = 0;
+
+        clock_t t = clock();
+        CreateIndexBufferSingleThreaded(n, n, points, size);
+        delete[] points;
+        t = clock() - t;
+        double time_taken = (((double)t) / CLOCKS_PER_SEC); // in seconds
+        printf("CPU Single threaded took %f seconds\n", time_taken);
+
+        t = clock();
+        CreateIndexBufferMultiThreaded(n, n, points, size);
+        delete[] points;
+        t = clock() - t;
+        time_taken = (((double)t) / CLOCKS_PER_SEC); // in seconds
+        printf("CPU Multi threaded took %f seconds\n", time_taken);
+
+        std::cout << "Enter a number:\n";
+        std::cin >> n;
+    }
+
     std::cout << "\ndone!\n";
 }
 
